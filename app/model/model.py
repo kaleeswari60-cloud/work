@@ -1,6 +1,14 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from database import Base
+
+# Association Table
+user_hobbies = Table(
+    "user_hobbies",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("hobby_id", Integer, ForeignKey("hobbies.id"))
+)
 
 
 class User(Base):
@@ -15,7 +23,11 @@ class User(Base):
     country = Column(String)
     city = Column(String)
 
-    hobbies = relationship("UserHobby", back_populates="user")
+    hobbies = relationship(
+        "Hobby",
+        secondary=user_hobbies,
+        back_populates="users"
+    )
 
 
 class Hobby(Base):
@@ -24,15 +36,8 @@ class Hobby(Base):
     id = Column(Integer, primary_key=True)
     hobby_name = Column(String, unique=True)
 
-    users = relationship("UserHobby", back_populates="hobby")
-
-
-class UserHobby(Base):
-    __tablename__ = "user_hobbies"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    hobby_id = Column(Integer, ForeignKey("hobbies.id"))
-
-    user = relationship("User", back_populates="hobbies")
-    hobby = relationship("Hobby", back_populates="users")
+    users = relationship(
+        "User",
+        secondary=user_hobbies,
+        back_populates="hobbies"
+    )

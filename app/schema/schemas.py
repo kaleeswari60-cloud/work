@@ -3,8 +3,6 @@ from datetime import date
 from typing import List
 
 
-# ---------------- HOBBIES ----------------
-
 class HobbyCreate(BaseModel):
     hobby_name: str
 
@@ -17,17 +15,6 @@ class Hobby(BaseModel):
         from_attributes = True
 
 
-# ---------------- USER-HOBBY RELATION ----------------
-
-class UserHobby(BaseModel):
-    hobby: Hobby
-
-    class Config:
-        from_attributes = True
-
-
-# ---------------- USERS ----------------
-
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
@@ -36,7 +23,7 @@ class UserCreate(BaseModel):
     password: str
     country: str
     city: str
-    hobbies: List[int]   # list of hobby IDs selected by user
+    hobbies: List[int]
 
 
 class User(BaseModel):
@@ -46,7 +33,7 @@ class User(BaseModel):
     email: str
     country: str
     city: str
-    hobbies: List[UserHobby]   # display hobbies with user
+    hobbies: List[Hobby]
 
     class Config:
         from_attributes = True

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+
 from database import SessionLocal, engine, Base
 import models, schemas
 
@@ -8,6 +9,8 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
+# ---------------- DATABASE DEPENDENCY ----------------
 
 def get_db():
     db = SessionLocal()
@@ -67,18 +70,13 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         city=user.city
     )
 
+    hobbies = db.query(models.Hobby).filter(models.Hobby.id.in_(user.hobbies)).all()
+
+    db_user.hobbies = hobbies
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-
-    for hobby_id in user.hobbies:
-        relation = models.UserHobby(
-            user_id=db_user.id,
-            hobby_id=hobby_id
-        )
-        db.add(relation)
-
-    db.commit()
 
     return db_user
 
@@ -92,23 +90,20 @@ def get_users(db: Session = Depends(get_db)):
     return users
 
 
-# ---------------- USER HOBBIES ----------------
+# ---------------- USERS BY HOBBY ----------------
 
 @app.get("/users/by-hobby/{hobby_id}", response_model=list[schemas.User])
 def get_users_by_hobby(hobby_id: int, db: Session = Depends(get_db)):
 
     stmt = (
         select(models.User)
-        .join(models.UserHobby, models.User.id == models.UserHobby.user_id)
-        .where(models.UserHobby.hobby_id == hobby_id)
+        .join(models.user_hobbies)
+        .where(models.user_hobbies.c.hobby_id == hobby_id)
     )
 
     users = db.execute(stmt).scalars().all()
 
     if not users:
-        raise HTTPException(
-            status_code=404,
-            detail="No users found with this hobby id"
-        )
+        raise HTTPException(status_code=404, detail="No users found")
 
     return users
